@@ -1,8 +1,9 @@
-# Feedback admin
+# Database lichen project
 
 Standalone Streamlit app for browsing, downloading, and deleting rows in the
 shared `feedback` table (Supabase Postgres) written by
-`Stage3/streamlit_app`'s feedback widget — and their images/evidence on
+[the AI Model Evaluation app](https://yolounetlichendetection-zkyucczccmlcsqkyewmu46.streamlit.app/)'s
+(`Stage3/streamlit_app`) feedback widget — and their images/evidence on
 Cloudflare R2. Username/password gated — it has permanent delete access to
 production data, so keep the credentials in `.streamlit/secrets.toml` (or
 Streamlit Cloud's Secrets UI) strong if this is ever exposed beyond a small

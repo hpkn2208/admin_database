@@ -1,4 +1,4 @@
-"""Feedback admin — standalone Streamlit app for browsing, downloading, and
+"""Database lichen project — standalone Streamlit app for browsing, downloading, and
 deleting rows in the shared `feedback` table (Supabase Postgres) + their
 images/evidence (Cloudflare R2). Username/password gated: this has permanent
 delete access to the same production data streamlit_app writes to.
@@ -18,7 +18,7 @@ import streamlit as st
 import db
 import storage
 
-st.set_page_config(page_title="Feedback admin", layout="wide")
+st.set_page_config(page_title="Database lichen project", layout="wide")
 
 
 def _present(v) -> bool:
@@ -38,7 +38,7 @@ def _arcname(key: str) -> str:
 
 # ── Login gate ────────────────────────────────────────────────────────────
 if not st.session_state.get("authed"):
-    st.title("Feedback admin")
+    st.title("Database lichen project")
     with st.form("login"):
         user = st.text_input("Username")
         pwd = st.text_input("Password", type="password")
@@ -51,8 +51,16 @@ if not st.session_state.get("authed"):
             st.error("Wrong username or password.")
     st.stop()
 
-st.title("Feedback admin")
-st.caption("Browse, download, and delete rows in the shared `feedback` table (Supabase + R2).")
+st.title("Database lichen project")
+st.caption(
+    "The `feedback` table stores every prediction a user marked Correct/Incorrect on the "
+    "AI Model Evaluation app, plus their comments and evidence attachments (Supabase Postgres "
+    "+ Cloudflare R2 images). Select rows below to view, download, or delete them."
+)
+st.markdown(
+    "Want to leave feedback on a prediction? Submit it here: "
+    "https://yolounetlichendetection-zkyucczccmlcsqkyewmu46.streamlit.app/"
+)
 
 df = db.load_feedback()
 
