@@ -20,6 +20,13 @@ import storage
 
 st.set_page_config(page_title="Feedback admin", layout="wide")
 
+
+def _present(v) -> bool:
+    """True only for a real, non-empty string. Pandas can surface SQL NULLs
+    as NaN — a *truthy* float, unlike None — for nullable text columns
+    (version-dependent), so a bare `if v:` check is not safe here."""
+    return isinstance(v, str) and bool(v)
+
 # ── Login gate ────────────────────────────────────────────────────────────
 if not st.session_state.get("authed"):
     st.title("Feedback admin")
@@ -75,19 +82,19 @@ st.subheader(f"{len(selected)} row(s) selected")
 for _, row in selected.iterrows():
     with st.container(border=True):
         header = f"**{row['created_at']}** — {row['category']} — {row['feedback_type']}"
-        if row["reason"]:
+        if _present(row["reason"]):
             header += f" ({row['reason']})"
         st.markdown(header)
 
         c1, c2 = st.columns(2)
-        if row["original_path"]:
+        if _present(row["original_path"]):
             with c1:
                 st.image(storage.get_image_url(row["original_path"]), caption="Original")
                 st.download_button(
                     "Download original", storage.download_bytes(row["original_path"]),
                     file_name=Path(row["original_path"]).name, key=f"dl_orig_{row['id']}",
                 )
-        if row["overlay_path"]:
+        if _present(row["overlay_path"]):
             with c2:
                 st.image(storage.get_image_url(row["overlay_path"]), caption="Overlay")
                 st.download_button(
@@ -95,10 +102,10 @@ for _, row in selected.iterrows():
                     file_name=Path(row["overlay_path"]).name, key=f"dl_ov_{row['id']}",
                 )
 
-        if row["comment"]:
+        if _present(row["comment"]):
             st.markdown(f"**Comment:** {row['comment']}")
 
-        if row["evidence_paths"]:
+        if _present(row["evidence_paths"]):
             st.markdown("**Evidence attachments:**")
             for key in json.loads(row["evidence_paths"]):
                 st.download_button(
@@ -114,9 +121,9 @@ if st.button("Prepare ZIP of all selected images"):
         for _, row in selected.iterrows():
             for col in ("original_path", "overlay_path"):
                 key = row[col]
-                if key:
+                if _present(key):
                     zf.writestr(Path(key).name, storage.download_bytes(key))
-            if row["evidence_paths"]:
+            if _present(row["evidence_paths"]):
                 for key in json.loads(row["evidence_paths"]):
                     zf.writestr(Path(key).name, storage.download_bytes(key))
     st.session_state["zip_bytes"] = zip_buf.getvalue()

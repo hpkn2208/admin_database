@@ -24,11 +24,12 @@ def load_feedback() -> pd.DataFrame:
         df = pd.read_sql(text("SELECT * FROM feedback ORDER BY created_at DESC"), conn)
     if df.empty:
         return df
-    # SQL NULLs come back from pandas as NaN, which is truthy in Python (unlike
-    # None) — normalize to None so `if row["overlay_path"]:`-style checks below
-    # and in app.py behave correctly for the many optional/nullable columns.
-    df = df.where(pd.notnull(df), None)
     df["created_at"] = pd.to_datetime(df["created_at"])
+    # pandas' default "str" dtype boxes a SQL NULL as a *truthy* float NaN
+    # when read as a Python scalar (not None, not pd.NA) — confirmed on both
+    # pandas 3.0 locally and whatever's on Streamlit Cloud. Every place that
+    # reads a nullable text column (here, and app.py's _present() helper)
+    # must check isinstance(v, str), never a bare `if v:`.
     df["evidence_count"] = df["evidence_paths"].apply(
         lambda v: len(json.loads(v)) if isinstance(v, str) and v else 0
     )
