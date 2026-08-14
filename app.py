@@ -84,11 +84,19 @@ with st.expander("Column reference — what each column means"):
 | `original_filename` | Filename as uploaded by the user | any |
 """)
 
+# Explicit order — Postgres appends ALTER TABLE ADD COLUMN'd columns
+# (comment, evidence_paths) at the physical end of existing rows, so the
+# DataFrame's natural column order doesn't match the logical reading order
+# an admin wants; pin it here instead of leaving it to chance.
 event = st.dataframe(
     df,
     hide_index=True,
     on_select="rerun",
     selection_mode="multi-row",
+    column_order=[
+        "created_at", "category", "feedback_type", "reason", "correct_class",
+        "comment", "evidence_count", "image_id", "original_filename",
+    ],
     column_config={
         "id": None,
         "original_path": None,
@@ -97,7 +105,14 @@ event = st.dataframe(
         "models_used": None,
         "evidence_paths": None,
         "created_at": st.column_config.DatetimeColumn("Created", format="MMM DD, YYYY, hh:mm a"),
+        "category": st.column_config.TextColumn("Category"),
+        "feedback_type": st.column_config.TextColumn("Feedback type"),
+        "reason": st.column_config.TextColumn("Reason"),
+        "correct_class": st.column_config.TextColumn("Correct class"),
+        "comment": st.column_config.TextColumn("Comment"),
         "evidence_count": st.column_config.NumberColumn("Evidence files"),
+        "image_id": st.column_config.TextColumn("Image ID"),
+        "original_filename": st.column_config.TextColumn("Original filename"),
     },
 )
 
