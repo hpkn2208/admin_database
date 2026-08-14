@@ -74,30 +74,22 @@ with st.expander("Column reference — what each column means"):
     st.markdown("""
 | Column | Meaning | Possible values |
 |---|---|---|
-| `created_at` | When the feedback was submitted | timestamp |
-| `category` | Auto-assigned bucket used to organize training data | `Success_Data`, `YOLO_FN`, `YOLO_FP`, `UNet_Bad_Mask`, `UNet_Wrong_Class`, `General_Feedback` |
-| `feedback_type` | Whether the user marked the prediction correct | `Correct`, `Incorrect` |
-| `reason` | What was wrong — only set when `feedback_type` is `Incorrect` | `YOLO missed lesion`, `YOLO false alarm`, `Wrong lichen mask`, `Wrong class` |
-| `correct_class` | The class the user says it should have been — only set when `reason` is `Wrong class` | `Normal`, `Lichen`, `Other` |
-| `comment` | Free-text note the user typed | any text, optional |
-| `evidence_count` | Number of evidence files (biopsy report, lab test, etc.) attached | `0`, `1`, `2`, ... |
-| `image_id` | Internal ID for the uploaded image (hash-based, not human-chosen) | any |
-| `original_filename` | Filename as uploaded by the user | any |
+| Image ID | Internal ID for the uploaded image (hash-based, not human-chosen) | any |
+| Original filename | Filename as uploaded by the user | any |
+| Category | Auto-assigned bucket used to organize training data | `Success_Data`, `YOLO_FN`, `YOLO_FP`, `UNet_Bad_Mask`, `UNet_Wrong_Class`, `General_Feedback` |
+| Feedback type | Whether the user marked the prediction correct | `Correct`, `Incorrect` |
+| Reason | What was wrong — only set when Feedback type is `Incorrect` | `YOLO missed lesion`, `YOLO false alarm`, `Wrong lichen mask`, `Wrong class` |
+| Correct class | The class the user says it should have been — only set when Reason is `Wrong class` | `Normal`, `Lichen`, `Other` |
+| Created | When the feedback was submitted | timestamp |
+| Comment | Free-text note the user typed | any text, optional |
+| Evidence files | Number of evidence files (biopsy report, lab test, etc.) attached | `0`, `1`, `2`, ... |
 """)
 
-# Explicit order — Postgres appends ALTER TABLE ADD COLUMN'd columns
-# (comment, evidence_paths) at the physical end of existing rows, so the
-# DataFrame's natural column order doesn't match the logical reading order
-# an admin wants; pin it here instead of leaving it to chance.
 event = st.dataframe(
     df,
     hide_index=True,
     on_select="rerun",
     selection_mode="multi-row",
-    column_order=[
-        "created_at", "category", "feedback_type", "reason", "correct_class",
-        "comment", "evidence_count", "image_id", "original_filename",
-    ],
     column_config={
         "id": None,
         "original_path": None,
