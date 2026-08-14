@@ -70,6 +70,20 @@ if df.empty:
 
 st.write(f"{len(df)} row(s)")
 
+with st.expander("Column reference — what each column means"):
+    st.markdown("""
+| Column | Meaning | Possible values |
+|---|---|---|
+| `created_at` | When the feedback was submitted | timestamp |
+| `category` | Auto-assigned bucket used to organize training data | `Success_Data`, `YOLO_FN`, `YOLO_FP`, `UNet_Bad_Mask`, `UNet_Wrong_Class`, `General_Feedback` |
+| `feedback_type` | Whether the user marked the prediction correct | `Correct`, `Incorrect` |
+| `reason` | What was wrong — only set when `feedback_type` is `Incorrect` | `YOLO missed lesion`, `YOLO false alarm`, `Wrong lichen mask`, `Wrong class` |
+| `correct_class` | The class the user says it should have been — only set when `reason` is `Wrong class` | `Normal`, `Lichen`, `Other` |
+| `comment` | Free-text note the user typed | any text, optional |
+| `evidence_count` | Number of evidence files (biopsy report, lab test, etc.) attached | `0`, `1`, `2`, ... |
+| `original_filename` | Filename as uploaded by the user | any |
+""")
+
 event = st.dataframe(
     df,
     hide_index=True,
@@ -95,6 +109,27 @@ if selected.empty:
 
 st.divider()
 st.subheader(f"{len(selected)} row(s) selected")
+
+show_images = st.checkbox("Show images in the list below", value=True)
+
+with st.expander("How to use the download options"):
+    st.markdown("""
+1. Click **Prepare ZIP of all selected images** below. This fetches every
+   selected row's original/overlay/evidence files from R2 — allow a few
+   seconds for larger selections.
+2. Once it's ready, a **Download ZIP** button appears — click it to save
+   the file. Inside, files are grouped into folders by `category`
+   (e.g. `YOLO_FN/`, `UNet_Bad_Mask/`), the same layout Web 1's own
+   feedback export uses — so a folder's images all belong to the same
+   feedback bucket.
+3. Only want one file? Skip the ZIP and use the **Download original** /
+   **Download overlay** / evidence buttons under the case you want, further
+   down the page.
+
+**What to expect:** the ZIP only contains what's currently selected in the
+table above — reselect rows and prepare again if you change the selection.
+Preparing a new ZIP replaces the previous one.
+""")
 
 if st.button("Prepare ZIP of all selected images"):
     zip_buf = io.BytesIO()
@@ -127,14 +162,16 @@ for _, row in selected.iterrows():
         c1, c2 = st.columns(2)
         if _present(row["original_path"]):
             with c1:
-                st.image(storage.get_image_url(row["original_path"]), caption="Original")
+                if show_images:
+                    st.image(storage.get_image_url(row["original_path"]), caption="Original")
                 st.download_button(
                     "Download original", storage.download_bytes(row["original_path"]),
                     file_name=Path(row["original_path"]).name, key=f"dl_orig_{row['id']}",
                 )
         if _present(row["overlay_path"]):
             with c2:
-                st.image(storage.get_image_url(row["overlay_path"]), caption="Overlay")
+                if show_images:
+                    st.image(storage.get_image_url(row["overlay_path"]), caption="Overlay")
                 st.download_button(
                     "Download overlay", storage.download_bytes(row["overlay_path"]),
                     file_name=Path(row["overlay_path"]).name, key=f"dl_ov_{row['id']}",
