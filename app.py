@@ -81,6 +81,7 @@ with st.expander("Column reference — what each column means"):
 | `correct_class` | The class the user says it should have been — only set when `reason` is `Wrong class` | `Normal`, `Lichen`, `Other` |
 | `comment` | Free-text note the user typed | any text, optional |
 | `evidence_count` | Number of evidence files (biopsy report, lab test, etc.) attached | `0`, `1`, `2`, ... |
+| `image_id` | Internal ID for the uploaded image (hash-based, not human-chosen) | any |
 | `original_filename` | Filename as uploaded by the user | any |
 """)
 
