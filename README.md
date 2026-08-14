@@ -3,8 +3,15 @@
 Standalone Streamlit app for browsing, downloading, and deleting rows in the
 shared `feedback` table (Supabase Postgres) written by
 `Stage3/streamlit_app`'s feedback widget — and their images/evidence on
-Cloudflare R2. **Local-only, password-gated** — do not deploy this publicly,
-it has permanent delete access to production data.
+Cloudflare R2. Username/password gated — it has permanent delete access to
+production data, so keep the credentials in `.streamlit/secrets.toml` (or
+Streamlit Cloud's Secrets UI) strong if this is ever exposed beyond a small
+trusted group.
+
+Deployed at: https://appdatabase-hqctzsnnzb6zfftya5mzfy.streamlit.app/
+(repo: https://github.com/hpkn2208/admin_database) — kept awake by
+`.github/workflows/keep-alive.yml`, same pattern as `streamlit_app` /
+`streamlit_case_app`.
 
 ## Setup
 

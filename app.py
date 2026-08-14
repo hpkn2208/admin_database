@@ -1,7 +1,7 @@
 """Feedback admin — standalone Streamlit app for browsing, downloading, and
 deleting rows in the shared `feedback` table (Supabase Postgres) + their
-images/evidence (Cloudflare R2). Local-only, password-gated: this has
-permanent delete access to the same production data streamlit_app writes to.
+images/evidence (Cloudflare R2). Username/password gated: this has permanent
+delete access to the same production data streamlit_app writes to.
 
 Read-only against streamlit_app / streamlit_case_app themselves — this app
 only touches the shared `feedback` table and `research-app/` R2 objects that
