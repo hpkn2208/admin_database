@@ -27,6 +27,15 @@ def _present(v) -> bool:
     (version-dependent), so a bare `if v:` check is not safe here."""
     return isinstance(v, str) and bool(v)
 
+
+def _arcname(key: str) -> str:
+    """R2 keys look like "research-app/{category}/{filename}" — drop the
+    app-prefix segment so the ZIP mirrors Web 1's own feedback export
+    (feedback.py::create_feedback_zip), which groups files under
+    "{category}/{filename}" instead of dumping everything flat."""
+    parts = key.split("/", 1)
+    return parts[1] if len(parts) > 1 else parts[0]
+
 # ── Login gate ────────────────────────────────────────────────────────────
 if not st.session_state.get("authed"):
     st.title("Feedback admin")
@@ -79,6 +88,27 @@ if selected.empty:
 st.divider()
 st.subheader(f"{len(selected)} row(s) selected")
 
+if st.button("Prepare ZIP of all selected images"):
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for _, row in selected.iterrows():
+            for col in ("original_path", "overlay_path"):
+                key = row[col]
+                if _present(key):
+                    zf.writestr(_arcname(key), storage.download_bytes(key))
+            if _present(row["evidence_paths"]):
+                for key in json.loads(row["evidence_paths"]):
+                    zf.writestr(_arcname(key), storage.download_bytes(key))
+    st.session_state["zip_bytes"] = zip_buf.getvalue()
+
+if "zip_bytes" in st.session_state:
+    st.download_button(
+        "Download ZIP", st.session_state["zip_bytes"],
+        file_name="feedback_selected.zip", key="dl_zip",
+    )
+
+st.divider()
+
 for _, row in selected.iterrows():
     with st.container(border=True):
         header = f"**{row['created_at']}** — {row['category']} — {row['feedback_type']}"
@@ -112,27 +142,6 @@ for _, row in selected.iterrows():
                     f":material/download: {Path(key).name}", storage.download_bytes(key),
                     file_name=Path(key).name, key=f"dl_ev_{row['id']}_{key}",
                 )
-
-st.divider()
-
-if st.button("Prepare ZIP of all selected images"):
-    zip_buf = io.BytesIO()
-    with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for _, row in selected.iterrows():
-            for col in ("original_path", "overlay_path"):
-                key = row[col]
-                if _present(key):
-                    zf.writestr(Path(key).name, storage.download_bytes(key))
-            if _present(row["evidence_paths"]):
-                for key in json.loads(row["evidence_paths"]):
-                    zf.writestr(Path(key).name, storage.download_bytes(key))
-    st.session_state["zip_bytes"] = zip_buf.getvalue()
-
-if "zip_bytes" in st.session_state:
-    st.download_button(
-        "Download ZIP", st.session_state["zip_bytes"],
-        file_name="feedback_selected.zip", key="dl_zip",
-    )
 
 st.divider()
 st.warning(f"Deleting is permanent — {len(selected)} row(s) and all their images/evidence "
