@@ -124,31 +124,31 @@ if selected.empty:
 st.divider()
 st.subheader(f"{len(selected)} row(s) selected")
 
-show_images = st.checkbox("Show images in the list below", value=True)
-
-with st.expander("How to use the download options"):
-    st.markdown("""
-1. Click **Prepare ZIP of all selected images** below. This fetches every
-   selected row's original/overlay/evidence files from R2 — allow a few
-   seconds for larger selections.
-2. Once it's ready, a **Download ZIP** button appears — click it to save
-   the file. Inside, files are grouped into folders by `category`
-   (e.g. `YOLO_FN/`, `UNet_Bad_Mask/`), the same layout Web 1's own
-   feedback export uses — so a folder's images all belong to the same
-   feedback bucket.
-3. Only want one file? Skip the ZIP and use the **Download original** /
-   **Download overlay** / evidence buttons under the case you want, further
-   down the page.
-
-**What to expect:** the ZIP only contains what's currently selected in the
-table above — reselect rows and prepare again if you change the selection.
-Preparing a new ZIP replaces the previous one.
-""")
 
 dl_col, del_col = st.columns(2)
 
 with dl_col:
     st.markdown("**Download**")
+    
+    with st.expander("How to use the download options"):
+        st.markdown("""
+    1. Click **Prepare ZIP of all selected images** below. This fetches every
+    selected row's original/overlay/evidence files from R2 — allow a few
+    seconds for larger selections.
+    2. Once it's ready, a **Download ZIP** button appears — click it to save
+    the file. Inside, files are grouped into folders by `category`
+    (e.g. `YOLO_FN/`, `UNet_Bad_Mask/`), the same layout Web 1's own
+    feedback export uses — so a folder's images all belong to the same
+    feedback bucket.
+    3. Only want one file? Skip the ZIP and use the **Download original** /
+    **Download overlay** / evidence buttons under the case you want, further
+    down the page.
+
+    **What to expect:** the ZIP only contains what's currently selected in the
+    table above — reselect rows and prepare again if you change the selection.
+    Preparing a new ZIP replaces the previous one.
+    """)
+
     if st.button("Prepare ZIP of all selected images"):
         zip_buf = io.BytesIO()
         with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -181,6 +181,7 @@ with del_col:
         st.rerun()
 
 st.divider()
+show_images = st.checkbox("Show images in the list below", value=True)
 
 for _, row in selected.iterrows():
     with st.container(border=True):
