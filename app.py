@@ -62,6 +62,10 @@ st.markdown(
     "https://yolounetlichendetection-zkyucczccmlcsqkyewmu46.streamlit.app/"
 )
 
+if "schema_ready" not in st.session_state:
+    db.ensure_schema()
+    st.session_state["schema_ready"] = True
+
 df = db.load_feedback()
 
 if df.empty:
@@ -82,6 +86,7 @@ with st.expander("Column reference — what each column means"):
 | Correct class | The class the user says it should have been — only set when Reason is `Wrong class` | `Normal`, `Lichen`, `Other` |
 | Created | When the feedback was submitted | timestamp |
 | Comment | Free-text note the user typed | any text, optional |
+| Feedback by | Which signed-in reviewer submitted this feedback | `testuser1`, `testuser2`, `testuser3` |
 | Evidence files | Number of evidence files (biopsy report, lab test, etc.) attached | `0`, `1`, `2`, ... |
 """)
 
@@ -103,6 +108,7 @@ event = st.dataframe(
         "reason": st.column_config.TextColumn("Reason"),
         "correct_class": st.column_config.TextColumn("Correct class"),
         "comment": st.column_config.TextColumn("Comment"),
+        "feedback_by": st.column_config.TextColumn("Feedback by"),
         "evidence_count": st.column_config.NumberColumn("Evidence files"),
         "image_id": st.column_config.TextColumn("Image ID"),
         "original_filename": st.column_config.TextColumn("Original filename"),
@@ -139,24 +145,40 @@ table above — reselect rows and prepare again if you change the selection.
 Preparing a new ZIP replaces the previous one.
 """)
 
-if st.button("Prepare ZIP of all selected images"):
-    zip_buf = io.BytesIO()
-    with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for _, row in selected.iterrows():
-            for col in ("original_path", "overlay_path"):
-                key = row[col]
-                if _present(key):
-                    zf.writestr(_arcname(key), storage.download_bytes(key))
-            if _present(row["evidence_paths"]):
-                for key in json.loads(row["evidence_paths"]):
-                    zf.writestr(_arcname(key), storage.download_bytes(key))
-    st.session_state["zip_bytes"] = zip_buf.getvalue()
+dl_col, del_col = st.columns(2)
 
-if "zip_bytes" in st.session_state:
-    st.download_button(
-        "Download ZIP", st.session_state["zip_bytes"],
-        file_name="feedback_selected.zip", key="dl_zip",
-    )
+with dl_col:
+    st.markdown("**Download**")
+    if st.button("Prepare ZIP of all selected images"):
+        zip_buf = io.BytesIO()
+        with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            for _, row in selected.iterrows():
+                for col in ("original_path", "overlay_path"):
+                    key = row[col]
+                    if _present(key):
+                        zf.writestr(_arcname(key), storage.download_bytes(key))
+                if _present(row["evidence_paths"]):
+                    for key in json.loads(row["evidence_paths"]):
+                        zf.writestr(_arcname(key), storage.download_bytes(key))
+        st.session_state["zip_bytes"] = zip_buf.getvalue()
+
+    if "zip_bytes" in st.session_state:
+        st.download_button(
+            "Download ZIP", st.session_state["zip_bytes"],
+            file_name="feedback_selected.zip", key="dl_zip",
+        )
+
+with del_col:
+    st.markdown("**Delete**")
+    st.warning(f"Deleting is permanent — {len(selected)} row(s) and all their images/evidence "
+               "will be removed from Supabase + R2, no undo.")
+    confirm = st.checkbox("I understand, delete the selected row(s).")
+    if st.button(":material/delete: Delete selected", disabled=not confirm, type="primary"):
+        db.delete_feedback_rows(selected["id"].tolist())
+        db.load_feedback.clear()
+        st.session_state.pop("zip_bytes", None)
+        st.success(f"Deleted {len(selected)} row(s).")
+        st.rerun()
 
 st.divider()
 
@@ -165,6 +187,8 @@ for _, row in selected.iterrows():
         header = f"**{row['created_at']}** — {row['category']} — {row['feedback_type']}"
         if _present(row["reason"]):
             header += f" ({row['reason']})"
+        if _present(row.get("feedback_by")):
+            header += f" — by {row['feedback_by']}"
         st.markdown(header)
 
         c1, c2 = st.columns(2)
@@ -195,14 +219,3 @@ for _, row in selected.iterrows():
                     f":material/download: {Path(key).name}", storage.download_bytes(key),
                     file_name=Path(key).name, key=f"dl_ev_{row['id']}_{key}",
                 )
-
-st.divider()
-st.warning(f"Deleting is permanent — {len(selected)} row(s) and all their images/evidence "
-           "will be removed from Supabase + R2, no undo.")
-confirm = st.checkbox("I understand, delete the selected row(s).")
-if st.button(":material/delete: Delete selected", disabled=not confirm, type="primary"):
-    db.delete_feedback_rows(selected["id"].tolist())
-    db.load_feedback.clear()
-    st.session_state.pop("zip_bytes", None)
-    st.success(f"Deleted {len(selected)} row(s).")
-    st.rerun()

@@ -18,6 +18,15 @@ def _engine():
     return create_engine(st.secrets["postgres_url"])
 
 
+def ensure_schema() -> None:
+    """Defensive ALTER TABLE ADD COLUMN IF NOT EXISTS for feedback_by — this
+    app never creates the table, but if it's opened before streamlit_app has
+    booted at least once since feedback_by was added there, the column
+    might not exist yet. Idempotent, safe to call every session."""
+    with _engine().begin() as conn:
+        conn.execute(text("ALTER TABLE feedback ADD COLUMN IF NOT EXISTS feedback_by TEXT"))
+
+
 @st.cache_data(ttl=10)
 def load_feedback() -> pd.DataFrame:
     with _engine().connect() as conn:
