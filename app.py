@@ -62,10 +62,6 @@ st.markdown(
     "https://yolounetlichendetection-zkyucczccmlcsqkyewmu46.streamlit.app/"
 )
 
-if "schema_ready" not in st.session_state:
-    db.ensure_schema()
-    st.session_state["schema_ready"] = True
-
 df = db.load_feedback()
 
 if df.empty:
@@ -86,7 +82,6 @@ with st.expander("Column reference — what each column means"):
 | Correct class | The class the user says it should have been — only set when Reason is `Wrong class` | `Normal`, `Lichen`, `Other` |
 | Created | When the feedback was submitted | timestamp |
 | Comment | Free-text note the user typed | any text, optional |
-| Feedback by | Which signed-in reviewer submitted this feedback | `testuser1`, `testuser2`, `testuser3` |
 | Evidence files | Number of evidence files (biopsy report, lab test, etc.) attached | `0`, `1`, `2`, ... |
 """)
 
@@ -108,7 +103,6 @@ event = st.dataframe(
         "reason": st.column_config.TextColumn("Reason"),
         "correct_class": st.column_config.TextColumn("Correct class"),
         "comment": st.column_config.TextColumn("Comment"),
-        "feedback_by": st.column_config.TextColumn("Feedback by"),
         "evidence_count": st.column_config.NumberColumn("Evidence files"),
         "image_id": st.column_config.TextColumn("Image ID"),
         "original_filename": st.column_config.TextColumn("Original filename"),
@@ -188,8 +182,6 @@ for _, row in selected.iterrows():
         header = f"**{row['created_at']}** — {row['category']} — {row['feedback_type']}"
         if _present(row["reason"]):
             header += f" ({row['reason']})"
-        if _present(row.get("feedback_by")):
-            header += f" — by {row['feedback_by']}"
         st.markdown(header)
 
         c1, c2 = st.columns(2)
