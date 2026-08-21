@@ -76,9 +76,9 @@ with st.expander("Column reference — what each column means"):
 |---|---|---|
 | Image ID | Internal ID for the uploaded image (hash-based, not human-chosen) | any |
 | Original filename | Filename as uploaded by the user | any |
-| Category | Auto-assigned bucket used to organize training data | `Success_Data`, `YOLO_FN`, `YOLO_FP`, `UNet_Bad_Mask`, `UNet_Wrong_Class`, `General_Feedback` |
+| Category | Auto-assigned bucket used to organize training data | `Success_Data`, `UNet_Bad_Mask`, `UNet_Wrong_Class`, `General_Feedback` |
 | Feedback type | Whether the user marked the prediction correct | `Correct`, `Incorrect` |
-| Reason | What was wrong — only set when Feedback type is `Incorrect` | `YOLO missed lesion`, `YOLO false alarm`, `Wrong lichen mask`, `Wrong class` |
+| Reason | What was wrong — only set when Feedback type is `Incorrect` | `Wrong mask`, `Wrong class` |
 | Correct class | The class the user says it should have been — only set when Reason is `Wrong class` | `Normal`, `Lichen`, `Other` |
 | Created | When the feedback was submitted | timestamp |
 | Comment | Free-text note the user typed | any text, optional |
@@ -131,7 +131,7 @@ with dl_col:
     seconds for larger selections.
     2. Once it's ready, a **Download ZIP** button appears — click it to save
     the file. Inside, files are grouped into folders by `category`
-    (e.g. `YOLO_FN/`, `UNet_Bad_Mask/`), the same layout Web 1's own
+    (e.g. `UNet_Bad_Mask/`), the same layout Web 1's own
     feedback export uses — so a folder's images all belong to the same
     feedback bucket.
     3. Only want one file? Skip the ZIP and use the **Download original** /
